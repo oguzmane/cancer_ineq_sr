@@ -1,0 +1,15 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+.DS_Store
+
+# Folders
+/inst
+
+
+# Extensions
+**xlsx
+**csv
+**rds
