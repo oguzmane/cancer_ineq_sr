@@ -1,0 +1,3 @@
+.selectize-control {
+  z-index: 100000000; /* Sit on top */ 
+}
