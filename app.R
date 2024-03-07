@@ -69,7 +69,7 @@ ui <- page_sidebar(
 server <- function(input, output) {
   
   data <- reactive({read_rds("inst/processed_table2.rds")})
-  # data_geo <- reactive({read_rds("inst/geo.rds")})
+  data_geo <- reactive({read_rds("inst/geo.rds")})
   
  
   # observeEvent(input$show, {

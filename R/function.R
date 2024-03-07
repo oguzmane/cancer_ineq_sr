@@ -91,7 +91,7 @@ treeFUN <- function(df,site_i,pub_year_i,study_start_i,
       e_charts() %>%
       e_treemap(
         leafDepth=1,
-        nodeClick=F,
+        nodeClick=T,
         drillDownIcon=F,
         label=list(fontSize=14,
                    fontWeight="bold",
