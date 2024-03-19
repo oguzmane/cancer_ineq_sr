@@ -50,16 +50,18 @@ ui <- page_sidebar(
     nav_panel("Treemap",
               echarts4rOutput("tree")),
     nav_panel("Time Series",
-              uiOutput("time_selectMetric"),
+              uiOutput("time_selectInequality"),
               echarts4rOutput("time")),
     nav_panel("Map",
               uiOutput("map_selectInequality"),
               tmapOutput("map")),
-    nav_panel("Table",tags$div(reactableOutput("table"),
-                               tags$br(),
-                               tags$br(),
-                               downloadButton("downloadData","Download")
-                               )
+    nav_panel("Table",
+              uiOutput("table_selectInequality"),
+              tags$div(reactableOutput("table"),
+                       tags$br(),
+                       tags$br(),
+                       downloadButton("downloadData","Download")
+                       )
               )
   )
   
@@ -196,8 +198,18 @@ server <- function(input, output) {
     shiny::validate(need(input$country, 'Please select a valid country'))
     
     treeFUN(data(),input$cancer,input$pub_year,input$study_start,
-            input$study_end,input$no_pat,input$poc,input$source,input$country,"plot")
+            input$study_end,input$no_pat,input$poc,input$source,input$country)
     
+  })
+  
+  output$time_selectInequality <- renderUI({
+    pickerInput("time_select",
+                "Select Inequality",
+                choices = sort(unique(data()$inequality)),
+                multiple = T,
+                selected = sort(unique(data()$inequality)),
+                options = list('actions-box' = T)
+    )
   })
 
   output$time <- renderEcharts4r({
@@ -209,7 +221,7 @@ server <- function(input, output) {
     shiny::validate(need(input$country, 'Please select a valid country'))
     
     timeFUN(data(),input$cancer,input$pub_year,input$study_start,
-            input$study_end,input$no_pat,input$poc,input$source,input$country)
+            input$study_end,input$no_pat,input$poc,input$source,input$country,input$time_select)
     
   })
   
@@ -228,10 +240,21 @@ server <- function(input, output) {
     shiny::validate(need(input$no_pat, 'Please select a valid sample size'))
     shiny::validate(need(input$source, 'Please select a valid data source'))
     shiny::validate(need(input$country, 'Please select a valid country'))
+    shiny::validate(need(input$table_select, 'Please select a valid inequality'))
 
     mapFUN(data(),data_geo(),input$cancer,input$pub_year,input$study_start,
            input$study_end,input$no_pat,input$poc,input$source,input$country,input$map_select)
 
+  })
+  
+  output$table_selectInequality <- renderUI({
+    pickerInput("table_select",
+                "Select Inequality",
+                choices = sort(unique(data()$inequality)),
+                multiple = T,
+                selected = sort(unique(data()$inequality)),
+                options = list('actions-box' = T)
+    )
   })
   
   output$table <- renderReactable({
@@ -241,9 +264,11 @@ server <- function(input, output) {
     shiny::validate(need(input$no_pat, 'Please select a valid sample size'))
     shiny::validate(need(input$source, 'Please select a valid data source'))
     shiny::validate(need(input$country, 'Please select a valid country'))
+    shiny::validate(need(input$table_select, 'Please select a valid inequality'))
     
-    treeFUN(data(),input$cancer,input$pub_year,input$study_start,
-            input$study_end,input$no_pat,input$poc,input$source,input$country,"table")
+    tableFUN(data(),input$cancer,input$pub_year,input$study_start,
+            input$study_end,input$no_pat,input$poc,input$source,input$country,"table",
+            input$table_select)
     
   })
   
@@ -252,8 +277,9 @@ server <- function(input, output) {
       paste0("cancer_inequal_summary.csv")
     },
     content = function(file) {
-      write.csv(treeFUN(data(),input$cancer,input$pub_year,input$study_start,
-                        input$study_end,input$no_pat,input$poc,input$source,input$country,"download"), 
+      write.csv(tableFUN(data(),input$cancer,input$pub_year,input$study_start,
+                        input$study_end,input$no_pat,input$poc,input$source,input$country,"download",
+                        input$table_select), 
                 file)
     }
   )
