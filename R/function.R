@@ -356,6 +356,9 @@ tableFUN <- function(df,site_i,pub_year_i,study_start_i,
                     inequality_type,summary,
                     study_start,study_end,
                     no_pat_org,country) %>% 
+      group_by(title) %>% 
+      mutate(country = paste(unique(country), collapse = ", ")) %>% 
+      ungroup() %>% 
       distinct() 
     
   }

@@ -12,6 +12,7 @@ library(bsicons)
 library(DescTools)
 library(sf)
 library(tmap)
+library(colorspace)
 
 ui <- page_sidebar(
   title="Cancer Inequalities - SR Results",
@@ -70,7 +71,7 @@ ui <- page_sidebar(
 
 server <- function(input, output) {
   
-  data <- reactive({read_rds("inst/processed_table2.rds")})
+  data <- reactive({read_rds("inst/processed_table3.rds")})
   data_geo <- reactive({read_rds("inst/geo.rds")})
   
  
@@ -98,7 +99,8 @@ server <- function(input, output) {
                                "Haematological"=list("Lymphoma - General","Hodgkin Lymphoma",
                                                      "Non-Hodgkin Lymphoma","Leukaemia - General",
                                                      "Lymphoblastic Leukaemia",
-                                                     "Myeloid Leukaemia"),
+                                                     "Myeloid Leukaemia",
+                                                     "Myeloma"),
                                "Musculoskeletal"=list("Bone/sarcoma"),
                                "Neurological"=list("Brain & CNS","Neuroblastoma"),
                                "Respiratory"=list("Lung","Mesothelioma"),
@@ -117,7 +119,7 @@ server <- function(input, output) {
                                                                 "Diagnosis","Screening","Treatment","Experience",
                                                                 "Quality of life"),
                                "Metrics" = list("Incidence","Mortality","Risk","Survival"),
-                               "Other" = list("Other")),
+                               "Other" = list("Other Care")),
                 multiple = T,
                 selected = unique(data()$poc)[!is.na(unique(data()$poc))], 
                 options = list('actions-box' = T)
@@ -240,7 +242,7 @@ server <- function(input, output) {
     shiny::validate(need(input$no_pat, 'Please select a valid sample size'))
     shiny::validate(need(input$source, 'Please select a valid data source'))
     shiny::validate(need(input$country, 'Please select a valid country'))
-    shiny::validate(need(input$table_select, 'Please select a valid inequality'))
+    shiny::validate(need(input$map_select, 'Please select a valid inequality'))
 
     mapFUN(data(),data_geo(),input$cancer,input$pub_year,input$study_start,
            input$study_end,input$no_pat,input$poc,input$source,input$country,input$map_select)
