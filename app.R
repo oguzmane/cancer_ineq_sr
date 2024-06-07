@@ -41,7 +41,9 @@ ui <- page_sidebar(
       uiOutput("selectPOC"),
       uiOutput("selectPub_Year"),
       uiOutput("selectStudy_Start"),
+      uiOutput("selectStudy_StartNA"),
       uiOutput("selectStudy_End"),
+      uiOutput("selectStudy_EndNA"),
       uiOutput("selectCountry"),
       uiOutput("selectNo_Pat"),
       uiOutput("selectSource")
@@ -71,7 +73,7 @@ ui <- page_sidebar(
 
 server <- function(input, output) {
   
-  data <- reactive({read_rds("inst/processed_table3.rds")})
+  data <- reactive({read_rds("inst/processed_table3_miss.rds")})
   data_geo <- reactive({read_rds("inst/geo.rds")})
   
  
@@ -81,31 +83,26 @@ server <- function(input, output) {
   #   ))
   # })
   
+  
+  cancer_select_choices <- reactive({
+    lapply(data() %>% 
+             dplyr::select(cancer_group,cancer_broad) %>% 
+             distinct() %>%
+             mutate(cancer_broad=factor(cancer_broad,
+                                        levels=cancer_levelsFUN("broad")),
+                    cancer_group=factor(cancer_group,
+                                        levels=cancer_levelsFUN("detailed"))) %>% 
+             filter(!is.na(cancer_broad)) %>% 
+             arrange(cancer_group) %>% 
+             group_by(cancer_broad) %>%
+             summarise(cancer_group = list(cancer_group)) %>%
+             deframe(), function(x) as.list(x))
+  })
+  
   output$selectCancer <- renderUI({
     pickerInput("cancer",
                 "Cancer Site",
-                choices = list("Overall"=list("Cancer - General"),
-                               "Breast"=list("Breast"),
-                               "Digestive/Gastrointestinal"=list("Anal","Appendiceal","Bowel",
-                                                                 "Bile duct cancer","Liver",
-                                                                 "Oesophageal","Pancreatic","Stomach"),
-                               "Endocrine"=list("Thyroid"),
-                               "Eye"=list("Retinoblastoma"),
-                               "Genitourinary"=list("Bladder","Kidney","Penile","Prostate",
-                                                    "Testicular","Wilms tumour"),
-                               "Germ Cell"=list("Germ cell tumours"),
-                               "Gynaecological"=list("Cervical","Ovarian","Uterine","Vulval"),
-                               "Head and Neck"=list("Head and Neck - General","Laryngeal","Salivary gland"),
-                               "Haematological"=list("Lymphoma - General","Hodgkin Lymphoma",
-                                                     "Non-Hodgkin Lymphoma","Leukaemia - General",
-                                                     "Lymphoblastic Leukaemia",
-                                                     "Myeloid Leukaemia",
-                                                     "Myeloma"),
-                               "Musculoskeletal"=list("Bone/sarcoma"),
-                               "Neurological"=list("Brain & CNS","Neuroblastoma"),
-                               "Respiratory"=list("Lung","Mesothelioma"),
-                               "Skin"=list("Skin - General","Melanoma","Non-melanoma"),
-                               "Other"=list("Other")),
+                choices = cancer_select_choices(),
                 multiple = T,
                 selected = unique(data()$cancer_group)[!is.na(unique(data()$cancer_group))], 
                 options = list('actions-box' = T)
@@ -119,7 +116,7 @@ server <- function(input, output) {
                                                                 "Diagnosis","Screening","Treatment","Experience",
                                                                 "Quality of life"),
                                "Metrics" = list("Incidence","Mortality","Risk","Survival"),
-                               "Other" = list("Other Care")),
+                               "Other" = list("Other Care","Missing")),
                 multiple = T,
                 selected = unique(data()$poc)[!is.na(unique(data()$poc))], 
                 options = list('actions-box' = T)
@@ -138,7 +135,7 @@ server <- function(input, output) {
   })
   
   output$selectStudy_Start <- renderUI({
-    sliderInput("study_start",
+    sliderInput("study_startA",
                 "Study Start",
                 min=min(data()$study_start,na.rm=T),
                 max=max(data()$study_start,na.rm=T),
@@ -149,8 +146,18 @@ server <- function(input, output) {
     )
   })
   
+  output$selectStudy_StartNA <- renderUI({
+    checkboxInput("study_startB", 
+                  "Include missing study start year", 
+                  value = TRUE, 
+                  width = NULL)
+  })
+  
+  study_start <- reactive({list(input$study_startA,
+                                input$study_startB)})
+  
   output$selectStudy_End <- renderUI({
-    sliderInput("study_end",
+    sliderInput("study_endA",
                 "Study End",
                 min=min(data()$study_end,na.rm=T),
                 max=max(data()$study_end,na.rm=T),
@@ -160,6 +167,16 @@ server <- function(input, output) {
                 dragRange=T
     )
   })
+  
+  output$selectStudy_EndNA <- renderUI({
+    checkboxInput("study_endB", 
+                  "Include missing study end year", 
+                  value = TRUE, 
+                  width = NULL)
+  })
+  
+  study_end <- reactive({list(input$study_endA,
+                              input$study_endB)})
   
   output$selectCountry <- renderUI({
     pickerInput("country",
@@ -199,8 +216,8 @@ server <- function(input, output) {
     shiny::validate(need(input$source, 'Please select a valid data source'))
     shiny::validate(need(input$country, 'Please select a valid country'))
     
-    treeFUN(data(),input$cancer,input$pub_year,input$study_start,
-            input$study_end,input$no_pat,input$poc,input$source,input$country)
+    treeFUN(data(),input$cancer,input$pub_year,study_start(),study_end(),
+            input$no_pat,input$poc,input$source,input$country)
     
   })
   
@@ -222,8 +239,8 @@ server <- function(input, output) {
     shiny::validate(need(input$source, 'Please select a valid data source'))
     shiny::validate(need(input$country, 'Please select a valid country'))
     
-    timeFUN(data(),input$cancer,input$pub_year,input$study_start,
-            input$study_end,input$no_pat,input$poc,input$source,input$country,input$time_select)
+    timeFUN(data(),input$cancer,input$pub_year,study_start(),study_end(),
+            input$no_pat,input$poc,input$source,input$country,input$time_select)
     
   })
   
@@ -244,8 +261,8 @@ server <- function(input, output) {
     shiny::validate(need(input$country, 'Please select a valid country'))
     shiny::validate(need(input$map_select, 'Please select a valid inequality'))
 
-    mapFUN(data(),data_geo(),input$cancer,input$pub_year,input$study_start,
-           input$study_end,input$no_pat,input$poc,input$source,input$country,input$map_select)
+    mapFUN(data(),data_geo(),input$cancer,input$pub_year,study_start(),study_end(),
+           input$no_pat,input$poc,input$source,input$country,input$map_select)
 
   })
   
@@ -268,8 +285,8 @@ server <- function(input, output) {
     shiny::validate(need(input$country, 'Please select a valid country'))
     shiny::validate(need(input$table_select, 'Please select a valid inequality'))
     
-    tableFUN(data(),input$cancer,input$pub_year,input$study_start,
-            input$study_end,input$no_pat,input$poc,input$source,input$country,"table",
+    tableFUN(data(),input$cancer,input$pub_year,study_start(),study_end(),
+            input$no_pat,input$poc,input$source,input$country,"table",
             input$table_select)
     
   })
@@ -279,8 +296,8 @@ server <- function(input, output) {
       paste0("cancer_inequal_summary.csv")
     },
     content = function(file) {
-      write.csv(tableFUN(data(),input$cancer,input$pub_year,input$study_start,
-                        input$study_end,input$no_pat,input$poc,input$source,input$country,"download",
+      write.csv(tableFUN(data(),input$cancer,input$pub_year,study_start(),study_end(),
+                        input$no_pat,input$poc,input$source,input$country,"download",
                         input$table_select), 
                 file)
     }

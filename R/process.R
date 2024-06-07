@@ -68,14 +68,10 @@
 #   mutate(cancer_group=gsub(", |;",",",cancer_type)) %>%
 #   separate_rows(cancer_group,sep=",") %>%
 #   cancerStringClean(.) %>%
-#   mutate(cancer_group=case_when(cancer_group=="All"~"Cancer - General",
-#                                 cancer_group=="NHL"~"Non-Hodgkin Lymphoma",
-#                                 cancer_group=="HL"~"Hodgkin Lymphoma",
-#                                 cancer_group=="Lymphoma"~"Lymphoma - General",
-#                                 cancer_group=="Leukaemia"~"Leukaemia - General",
-#                                 cancer_group=="Skin"~"Skin - General",
-#                                 cancer_group=="Head and neck"~"Head and Neck - General",
-#                                 T ~ cancer_group))
+#   cancerFormalGroup(.) %>%
+#   mutate_at(c("pub_year","study_start","study_end"),
+#             ~case_when(.>1900~.,
+#                        T~NA)) # FOR PREVIOUS TYPO...CAN DELETE EVENTUALLY
 # 
 # cat_list <- list()
 # 
@@ -94,7 +90,7 @@
 #   full_join(.,cat_list[[2]],by=c("end_id","cov_id","author","title","journal",
 #                                  "pub_year","study_start","study_end",
 #                                  "no_pat","cancer_type","inequality_type",
-#                                  "cancer_group","summary","no_pat_org",
+#                                  "cancer_group","cancer_broad","summary","no_pat_org",
 #                                  "comorbidity_type","ses_measure",
 #                                  "age_measure","sex_measure",
 #                                  "ethnicity_measure","geography_measure",
@@ -104,7 +100,7 @@
 #   full_join(.,cat_list[[3]],by=c("end_id","cov_id","author","title","journal",
 #                                  "pub_year","study_start","study_end",
 #                                  "no_pat","cancer_type","inequality_type",
-#                                  "cancer_group","summary","no_pat_org",
+#                                  "cancer_group","cancer_broad","summary","no_pat_org",
 #                                  "comorbidity_type","ses_measure",
 #                                  "age_measure","sex_measure",
 #                                  "ethnicity_measure","geography_measure",
@@ -114,7 +110,7 @@
 #   full_join(.,cat_list[[4]],by=c("end_id","cov_id","author","title","journal",
 #                                  "pub_year","study_start","study_end",
 #                                  "no_pat","cancer_type","inequality_type",
-#                                  "cancer_group","summary","no_pat_org",
+#                                  "cancer_group","cancer_broad","summary","no_pat_org",
 #                                  "comorbidity_type","ses_measure",
 #                                  "age_measure","sex_measure",
 #                                  "ethnicity_measure","geography_measure",
@@ -124,7 +120,7 @@
 #   full_join(.,cat_list[[5]],by=c("end_id","cov_id","author","title","journal",
 #                                  "pub_year","study_start","study_end",
 #                                  "no_pat","cancer_type","inequality_type",
-#                                  "cancer_group","summary","no_pat_org",
+#                                  "cancer_group","cancer_broad","summary","no_pat_org",
 #                                  "comorbidity_type","ses_measure",
 #                                  "age_measure","sex_measure",
 #                                  "ethnicity_measure","geography_measure",
@@ -144,17 +140,52 @@
 # 
 # write_rds(final,"inst/processed_table3.rds")
 
+# FOR MISSING -------------------------------------------------------------
+
+# miss_process <- read_rds("inst/processed_table3.rds")
+# 
+# sum(is.na(miss_process$cancer_group)) # 0
+# sum(is.na(miss_process$pub_year)) # 0
+# sum(is.na(miss_process$study_start)) # 52
+# sum(is.na(miss_process$study_end)) # 52
+# sum(is.na(miss_process$no_pat)) # 1376
+# sum(is.na(miss_process$poc)) # 2671
+# sum(is.na(miss_process$source)) # 46
+# sum(is.na(miss_process$country)) # 51
+# 
+# class(miss_process$cancer_group) # character
+# class(miss_process$pub_year) # numeric
+# class(miss_process$study_start) # numeric
+# class(miss_process$study_end) # numeric
+# class(miss_process$no_pat) # factor
+# class(miss_process$poc) # character
+# class(miss_process$source) # character
+# class(miss_process$country) # character
+# 
+# fill_miss <- miss_process %>%
+#   mutate_at(c("no_pat","poc","source","country"),
+#             ~case_when(is.na(.)~"Missing",T~.)) %>%
+#   mutate(no_pat=factor(no_pat,
+#                        levels=c("0 to 1,999","2,000 to 19,999",
+#                                 "20,000 to 99,999",">100,000","Missing")),
+#          poc=factor(poc,
+#                     levels=c(sort(unique(miss_process$poc)),"Missing")),
+#          source=factor(source,
+#                        levels=c(sort(unique(miss_process$source)),"Missing")),
+#          country=factor(country,
+#                         levels=c("England","Northern Ireland","Scotland",
+#                                  "Wales","Regional","UK","International",
+#                                  "Missing")))
+# 
+# write_rds(fill_miss,"inst/processed_table3_miss.rds")
+
+
+# GEO ---------------------------------------------------------------------
+# 
 # geo_1<-st_read("inst/geo/CTRY_DEC_2022_UK_BGC.shp")
 # geo_2<-st_transform(geo, '+proj=longlat +datum=WGS84')
 # geo_3<-ms_simplify(geo_2)
 # write_rds(geo_3,"inst/geo.rds")
-
-
-
-
-
-
-
 
 
 

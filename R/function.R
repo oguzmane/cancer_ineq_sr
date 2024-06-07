@@ -1,48 +1,30 @@
 
+timeline_modFUN <- function(var) {
+  
+  if (var[[2]]==T) {
+    
+    mod_var <- c(seq(var[[1]][1],var[[1]][2]),NA)
+    
+  } else if (var[[2]]==F) {
+    
+    mod_var <- seq(var[[1]][1],var[[1]][2])
+    
+  } else { # for publication year, which is not a list (like study start/end) due to no missing
+    
+    mod_var <-  seq(var[1],var[2])
+    
+  }
+  
+  return(mod_var)
+  
+}
+
 treeFUN <- function(df,site_i,pub_year_i,study_start_i,
                     study_end_i,no_pat_i,poc_i,source_i,country_i) {
   
-  # if (sum(site_i%in%"Overall"==T)>=1) {
-  #   
-  #   site_i <- unique(df$cancer)
-  #   
-  # }
-  # 
-  # if (sum(poc_i%in%"Overall"==T)>=1) {
-  #   
-  #   poc_i <- unique(df$poc)
-  #   
-  # }
-  # 
-  # if (sum(source_i%in%"Overall"==T)>=1) {
-  #   
-  #   source_i <- unique(df$source)
-  #   
-  # }
-  # 
-  # if (sum(no_pat_i%in%"Unrestricted"==T)>=1) {
-  #   
-  #   no_pat_i <- unique(df$no_pat)
-  #   
-  # }
-  
-  if (length(pub_year_i)>1) {
-    
-    pub_year_i <- seq(pub_year_i[1],pub_year_i[2])
-    
-  }
-  
-  if (length(study_start_i)>1) {
-    
-    study_start_i <- seq(study_start_i[1],study_start_i[2])
-    
-  }
-  
-  if (length(study_end_i)>1) {
-    
-    study_end_i <- seq(study_end_i[1],study_end_i[2])
-    
-  }
+  pub_year_i <- timeline_modFUN(pub_year_i)
+  study_start_i <- timeline_modFUN(study_start_i)
+  study_end_i <- timeline_modFUN(study_end_i)
   
   load <- df %>% 
     filter(cancer_group%in%site_i,
@@ -119,23 +101,9 @@ treeFUN <- function(df,site_i,pub_year_i,study_start_i,
 timeFUN <- function(df,site_i,pub_year_i,study_start_i,
                     study_end_i,no_pat_i,poc_i,source_i,country_i,inequality_select) {
   
-  if (length(pub_year_i)>1) {
-    
-    pub_year_i <- seq(pub_year_i[1],pub_year_i[2])
-    
-  }
-  
-  if (length(study_start_i)>1) {
-    
-    study_start_i <- seq(study_start_i[1],study_start_i[2])
-    
-  }
-  
-  if (length(study_end_i)>1) {
-    
-    study_end_i <- seq(study_end_i[1],study_end_i[2])
-    
-  }
+  pub_year_i <- timeline_modFUN(pub_year_i)
+  study_start_i <- timeline_modFUN(study_start_i)
+  study_end_i <- timeline_modFUN(study_end_i)
   
   load <- df %>% 
     filter(cancer_group%in%site_i,
@@ -182,23 +150,9 @@ timeFUN <- function(df,site_i,pub_year_i,study_start_i,
 mapFUN <- function(df,df_geo,site_i,pub_year_i,study_start_i,
                    study_end_i,no_pat_i,poc_i,source_i,country_i,inequality_select) {
   
-  if (length(pub_year_i)>1) {
-    
-    pub_year_i <- seq(pub_year_i[1],pub_year_i[2])
-    
-  }
-  
-  if (length(study_start_i)>1) {
-    
-    study_start_i <- seq(study_start_i[1],study_start_i[2])
-    
-  }
-  
-  if (length(study_end_i)>1) {
-    
-    study_end_i <- seq(study_end_i[1],study_end_i[2])
-    
-  }
+  pub_year_i <- timeline_modFUN(pub_year_i)
+  study_start_i <- timeline_modFUN(study_start_i)
+  study_end_i <- timeline_modFUN(study_end_i)
   
   load <- df %>% 
     filter(cancer_group%in%site_i,
@@ -223,10 +177,14 @@ mapFUN <- function(df,df_geo,site_i,pub_year_i,study_start_i,
   
   tmap_mode("view")
   
-  tm_shape(load_geo) +
-    tm_polygons("count",
+  tm_shape(load_geo %>% 
+             rename(`# studies`=count),
+           name="Geographic distribution of studies",
+           bbox=df_geo) +
+    tm_polygons("# studies",
                 palette=c("#f9eaf3","#BB0071"),
-                id="hover")
+                id="country") + 
+    tm_view(set.view = c(-5, 55, 5))
   
 }
 
@@ -234,47 +192,9 @@ tableFUN <- function(df,site_i,pub_year_i,study_start_i,
                      study_end_i,no_pat_i,poc_i,source_i,country_i,
                      type,inequality_select) {
   
-  # if (sum(site_i%in%"Overall"==T)>=1) {
-  #   
-  #   site_i <- unique(df$cancer)
-  #   
-  # }
-  # 
-  # if (sum(poc_i%in%"Overall"==T)>=1) {
-  #   
-  #   poc_i <- unique(df$poc)
-  #   
-  # }
-  # 
-  # if (sum(source_i%in%"Overall"==T)>=1) {
-  #   
-  #   source_i <- unique(df$source)
-  #   
-  # }
-  # 
-  # if (sum(no_pat_i%in%"Unrestricted"==T)>=1) {
-  #   
-  #   no_pat_i <- unique(df$no_pat)
-  #   
-  # }
-  
-  if (length(pub_year_i)>1) {
-    
-    pub_year_i <- seq(pub_year_i[1],pub_year_i[2])
-    
-  }
-  
-  if (length(study_start_i)>1) {
-    
-    study_start_i <- seq(study_start_i[1],study_start_i[2])
-    
-  }
-  
-  if (length(study_end_i)>1) {
-    
-    study_end_i <- seq(study_end_i[1],study_end_i[2])
-    
-  }
+  pub_year_i <- timeline_modFUN(pub_year_i)
+  study_start_i <- timeline_modFUN(study_start_i)
+  study_end_i <- timeline_modFUN(study_end_i)
   
   load <- df %>% 
     filter(cancer_group%in%site_i,
